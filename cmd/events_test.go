@@ -2,6 +2,7 @@ package cmd_test
 
 import (
 	"errors"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -11,7 +12,6 @@ import (
 	fakedir "github.com/cloudfoundry/bosh-init/director/fakes"
 	fakeui "github.com/cloudfoundry/bosh-init/ui/fakes"
 	boshtbl "github.com/cloudfoundry/bosh-init/ui/table"
-	"time"
 )
 
 var _ = Describe("EventsCmd", func() {
@@ -32,336 +32,116 @@ var _ = Describe("EventsCmd", func() {
 			opts EventsOpts
 		)
 
-		BeforeEach(func() {
-			opts = EventsOpts{}
-		})
-
 		act := func() error { return command.Run(opts) }
 
-		Context("when events are requested", func() {
+		events := []boshdir.Event{
+			&fakedir.FakeEvent{
+				IDStub:        func() string { return "4" },
+				TimestampStub: func() time.Time { return time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC) },
 
-			events := []boshdir.Event{
-				&fakedir.FakeEvent{
-					IdStub: func() int {
-						return 4
-					},
-					TimestampStub: func() time.Time {
-						return time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)
-					},
+				UserStub: func() string { return "user" },
 
-					UserStub: func() string {
-						return "user"
-					},
+				ActionStub:         func() string { return "action" },
+				ObjectTypeStub:     func() string { return "object_type" },
+				ObjectNameStub:     func() string { return "object_name" },
+				TaskIDStub:         func() string { return "taskID" },
+				DeploymentNameStub: func() string { return "deploymentName" },
+				InstanceStub:       func() string { return "instance" },
+				ContextStub:        func() map[string]interface{} { return map[string]interface{}{"user": "bosh_z$"} },
+			},
+			&fakedir.FakeEvent{
+				IDStub:        func() string { return "5" },
+				TimestampStub: func() time.Time { return time.Date(2090, time.November, 10, 23, 0, 0, 0, time.UTC) },
 
-					ActionStub: func() string {
-						return "action"
-					},
-					ObjectTypeStub: func() string {
-						return "object_type"
-					},
-					ObjectNameStub: func() string {
-						return "object_name"
-					},
-					TaskStub: func() string {
-						return "task"
-					},
-					DeploymentStub: func() string {
-						return "deployment"
-					},
-					InstanceStub: func() string {
-						return "instance"
-					},
-					ContextStub: func() map[string]interface{} {
-						ret := make(map[string]interface{})
-						ret["user"] = "bosh_z$"
-						return ret
-					},
-				},
-				&fakedir.FakeEvent{
-					IdStub: func() int {
-						return 5
-					},
-					TimestampStub: func() time.Time {
-						return time.Date(2090, time.November, 10, 23, 0, 0, 0, time.UTC)
-					},
+				UserStub: func() string { return "user2" },
 
-					UserStub: func() string {
-						return "user2"
-					},
+				ActionStub:         func() string { return "action2" },
+				ObjectTypeStub:     func() string { return "object_type2" },
+				ObjectNameStub:     func() string { return "object_name2" },
+				TaskIDStub:         func() string { return "task2" },
+				DeploymentNameStub: func() string { return "deployment2" },
+				InstanceStub:       func() string { return "instance2" },
+				ContextStub:        func() map[string]interface{} { return make(map[string]interface{}) },
+			},
+		}
 
-					ActionStub: func() string {
-						return "action2"
+		It("lists events", func() {
+			director.EventsReturns(events, nil)
+
+			err := act()
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(director.EventsArgsForCall(0)).To(Equal(boshdir.EventsFilter{}))
+
+			Expect(ui.Table).To(Equal(boshtbl.Table{
+				Content: "events",
+
+				Header: []string{"ID", "Time", "User", "Action", "Object Type", "Object ID", "Task ID", "Deployment", "Instance", "Context"},
+
+				Rows: [][]boshtbl.Value{
+					{
+						boshtbl.NewValueString("4"),
+						boshtbl.NewValueTime(time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)),
+						boshtbl.NewValueString("user"),
+						boshtbl.NewValueString("action"),
+						boshtbl.NewValueString("object_type"),
+						boshtbl.NewValueString("object_name"),
+						boshtbl.NewValueString("taskID"),
+						boshtbl.NewValueString("deploymentName"),
+						boshtbl.NewValueString("instance"),
+						boshtbl.NewValueInterface(map[string]interface{}{"user": "bosh_z$"}),
 					},
-					ObjectTypeStub: func() string {
-						return "object_type2"
-					},
-					ObjectNameStub: func() string {
-						return "object_name2"
-					},
-					TaskStub: func() string {
-						return "task2"
-					},
-					DeploymentStub: func() string {
-						return "deployment2"
-					},
-					InstanceStub: func() string {
-						return "instance2"
-					},
-					ContextStub: func() map[string]interface{} {
-						ret := make(map[string]interface{})
-						return ret
+					{
+						boshtbl.NewValueString("5"),
+						boshtbl.NewValueTime(time.Date(2090, time.November, 10, 23, 0, 0, 0, time.UTC)),
+						boshtbl.NewValueString("user2"),
+						boshtbl.NewValueString("action2"),
+						boshtbl.NewValueString("object_type2"),
+						boshtbl.NewValueString("object_name2"),
+						boshtbl.NewValueString("task2"),
+						boshtbl.NewValueString("deployment2"),
+						boshtbl.NewValueString("instance2"),
+						boshtbl.NewValueInterface(map[string]interface{}{}),
 					},
 				},
-			}
+			}))
+		})
 
-			event4 := []boshdir.Event{
-				events[0],
-			}
+		It("filters events based on options", func() {
+			beforeID := "0"
+			before := time.Date(2050, time.November, 10, 23, 0, 0, 0, time.UTC)
+			after := time.Date(3055, time.November, 10, 23, 0, 0, 0, time.UTC)
+			deploymentName := "deploymentName"
+			taskID := "task"
+			instance := "instance2"
+			opts.BeforeID = &beforeID
+			opts.Before = &before
+			opts.After = &after
+			opts.DeploymentName = &deploymentName
+			opts.TaskID = &taskID
+			opts.Instance = &instance
 
-			event5 := []boshdir.Event{
-				events[1],
-			}
+			director.EventsReturns(nil, nil)
 
-			It("lists events", func() {
+			err := act()
+			Expect(err).ToNot(HaveOccurred())
 
-				director.EventsReturns(events, nil)
+			Expect(director.EventsArgsForCall(0)).To(Equal(boshdir.EventsFilter{
+				BeforeID:       &beforeID,
+				Before:         &before,
+				After:          &after,
+				DeploymentName: &deploymentName,
+				TaskID:         &taskID,
+				Instance:       &instance,
+			}))
+		})
 
-				err := act()
-				Expect(err).ToNot(HaveOccurred())
+		It("returns error if events cannot be retrieved", func() {
+			director.EventsReturns(nil, errors.New("fake-err"))
 
-				Expect(ui.Table).To(Equal(boshtbl.Table{
-					Content: "events",
-
-					Header: []string{"ID", "Time", "User", "Action", "Object Type", "Object ID", "Task", "Deployment", "Instance", "Context"},
-
-					SortBy: []boshtbl.ColumnSort{{Column: 0}},
-
-					Rows: [][]boshtbl.Value{
-						{
-							boshtbl.NewValueInt(4),
-							boshtbl.NewValueTime(time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)),
-							boshtbl.NewValueString("user"),
-							boshtbl.NewValueString("action"),
-							boshtbl.NewValueString("object_type"),
-							boshtbl.NewValueString("object_name"),
-							boshtbl.NewValueString("task"),
-							boshtbl.NewValueString("deployment"),
-							boshtbl.NewValueString("instance"),
-							boshtbl.NewValueString("map[user:bosh_z$]"),
-						},
-						{
-							boshtbl.NewValueInt(5),
-							boshtbl.NewValueTime(time.Date(2090, time.November, 10, 23, 0, 0, 0, time.UTC)),
-							boshtbl.NewValueString("user2"),
-							boshtbl.NewValueString("action2"),
-							boshtbl.NewValueString("object_type2"),
-							boshtbl.NewValueString("object_name2"),
-							boshtbl.NewValueString("task2"),
-							boshtbl.NewValueString("deployment2"),
-							boshtbl.NewValueString("instance2"),
-							boshtbl.NewValueString("map[]"),
-						},
-					},
-				}))
-
-			})
-
-			It("filters events based on 'before-id' option", func() {
-
-				opts.BeforeId = 4
-
-				director.EventsReturns(event4, nil)
-
-				err := act()
-				Expect(err).ToNot(HaveOccurred())
-
-				Expect(ui.Table).To(Equal(boshtbl.Table{
-					Content: "events",
-
-					Header: []string{"ID", "Time", "User", "Action", "Object Type", "Object ID", "Task", "Deployment", "Instance", "Context"},
-
-					SortBy: []boshtbl.ColumnSort{{Column: 0}},
-
-					Rows: [][]boshtbl.Value{
-						{
-							boshtbl.NewValueInt(4),
-							boshtbl.NewValueTime(time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)),
-							boshtbl.NewValueString("user"),
-							boshtbl.NewValueString("action"),
-							boshtbl.NewValueString("object_type"),
-							boshtbl.NewValueString("object_name"),
-							boshtbl.NewValueString("task"),
-							boshtbl.NewValueString("deployment"),
-							boshtbl.NewValueString("instance"),
-							boshtbl.NewValueString("map[user:bosh_z$]"),
-						},
-					},
-				}))
-			})
-			It("filters events based on 'before' option", func() {
-				opts.Before = time.Date(2050, time.November, 10, 23, 0, 0, 0, time.UTC)
-
-				director.EventsReturns(event4, nil)
-
-				err := act()
-				Expect(err).ToNot(HaveOccurred())
-
-				Expect(ui.Table).To(Equal(boshtbl.Table{
-					Content: "events",
-
-					Header: []string{"ID", "Time", "User", "Action", "Object Type", "Object ID", "Task", "Deployment", "Instance", "Context"},
-
-					SortBy: []boshtbl.ColumnSort{{Column: 0}},
-
-					Rows: [][]boshtbl.Value{
-						{
-							boshtbl.NewValueInt(4),
-							boshtbl.NewValueTime(time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)),
-							boshtbl.NewValueString("user"),
-							boshtbl.NewValueString("action"),
-							boshtbl.NewValueString("object_type"),
-							boshtbl.NewValueString("object_name"),
-							boshtbl.NewValueString("task"),
-							boshtbl.NewValueString("deployment"),
-							boshtbl.NewValueString("instance"),
-							boshtbl.NewValueString("map[user:bosh_z$]"),
-						},
-					},
-				}))
-			})
-			It("filters events based on 'after' option", func() {
-				opts.After = time.Date(2050, time.November, 10, 23, 0, 0, 0, time.UTC)
-
-				director.EventsReturns(event5, nil)
-
-				err := act()
-				Expect(err).ToNot(HaveOccurred())
-
-				Expect(ui.Table).To(Equal(boshtbl.Table{
-					Content: "events",
-
-					Header: []string{"ID", "Time", "User", "Action", "Object Type", "Object ID", "Task", "Deployment", "Instance", "Context"},
-
-					SortBy: []boshtbl.ColumnSort{{Column: 0}},
-
-					Rows: [][]boshtbl.Value{
-						{
-							boshtbl.NewValueInt(5),
-							boshtbl.NewValueTime(time.Date(2090, time.November, 10, 23, 0, 0, 0, time.UTC)),
-							boshtbl.NewValueString("user2"),
-							boshtbl.NewValueString("action2"),
-							boshtbl.NewValueString("object_type2"),
-							boshtbl.NewValueString("object_name2"),
-							boshtbl.NewValueString("task2"),
-							boshtbl.NewValueString("deployment2"),
-							boshtbl.NewValueString("instance2"),
-							boshtbl.NewValueString("map[]"),
-						},
-					},
-				}))
-			})
-			It("filters events based on 'deployment' option", func() {
-
-				opts.Deployment = "deployment"
-
-				director.EventsReturns(event4, nil)
-
-				err := act()
-				Expect(err).ToNot(HaveOccurred())
-
-				Expect(ui.Table).To(Equal(boshtbl.Table{
-					Content: "events",
-
-					Header: []string{"ID", "Time", "User", "Action", "Object Type", "Object ID", "Task", "Deployment", "Instance", "Context"},
-
-					SortBy: []boshtbl.ColumnSort{{Column: 0}},
-
-					Rows: [][]boshtbl.Value{
-						{
-							boshtbl.NewValueInt(4),
-							boshtbl.NewValueTime(time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)),
-							boshtbl.NewValueString("user"),
-							boshtbl.NewValueString("action"),
-							boshtbl.NewValueString("object_type"),
-							boshtbl.NewValueString("object_name"),
-							boshtbl.NewValueString("task"),
-							boshtbl.NewValueString("deployment"),
-							boshtbl.NewValueString("instance"),
-							boshtbl.NewValueString("map[user:bosh_z$]"),
-						},
-					},
-				}))
-			})
-			It("filters events based on 'task' option", func() {
-				opts.Task = "task"
-
-				director.EventsReturns(event4, nil)
-
-				err := act()
-				Expect(err).ToNot(HaveOccurred())
-
-				Expect(ui.Table).To(Equal(boshtbl.Table{
-					Content: "events",
-
-					Header: []string{"ID", "Time", "User", "Action", "Object Type", "Object ID", "Task", "Deployment", "Instance", "Context"},
-
-					SortBy: []boshtbl.ColumnSort{{Column: 0}},
-
-					Rows: [][]boshtbl.Value{
-						{
-							boshtbl.NewValueInt(4),
-							boshtbl.NewValueTime(time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)),
-							boshtbl.NewValueString("user"),
-							boshtbl.NewValueString("action"),
-							boshtbl.NewValueString("object_type"),
-							boshtbl.NewValueString("object_name"),
-							boshtbl.NewValueString("task"),
-							boshtbl.NewValueString("deployment"),
-							boshtbl.NewValueString("instance"),
-							boshtbl.NewValueString("map[user:bosh_z$]"),
-						},
-					},
-				}))
-			})
-			It("filters events based on 'instance' option", func() {
-				opts.Instance = "instance2"
-
-				director.EventsReturns(event5, nil)
-
-				err := act()
-				Expect(err).ToNot(HaveOccurred())
-
-				Expect(ui.Table).To(Equal(boshtbl.Table{
-					Content: "events",
-
-					Header: []string{"ID", "Time", "User", "Action", "Object Type", "Object ID", "Task", "Deployment", "Instance", "Context"},
-
-					SortBy: []boshtbl.ColumnSort{{Column: 0}},
-
-					Rows: [][]boshtbl.Value{
-						{
-							boshtbl.NewValueInt(5),
-							boshtbl.NewValueTime(time.Date(2090, time.November, 10, 23, 0, 0, 0, time.UTC)),
-							boshtbl.NewValueString("user2"),
-							boshtbl.NewValueString("action2"),
-							boshtbl.NewValueString("object_type2"),
-							boshtbl.NewValueString("object_name2"),
-							boshtbl.NewValueString("task2"),
-							boshtbl.NewValueString("deployment2"),
-							boshtbl.NewValueString("instance2"),
-							boshtbl.NewValueString("map[]"),
-						},
-					},
-				}))
-			})
-
-			It("returns error if events cannot be retrieved", func() {
-				director.EventsReturns(nil, errors.New("fake-err"))
-
-				err := act()
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(ContainSubstring("fake-err"))
-			})
+			err := act()
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("fake-err"))
 		})
 	})
 })
