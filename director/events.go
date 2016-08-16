@@ -1,48 +1,50 @@
 package director
 
 import (
-	"fmt"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
-	"strings"
+	"net/url"
 	"time"
 )
 
 type EventImpl struct {
 	client Client
 
-	id         int
-	timestamp  time.Time
-	user       string
-	action     string
-	objectType string
-	objectName string
-	task       string
-	deployment string
-	instance   string
-	context    map[string]interface{}
+	id             string
+	parentID       string
+	timestamp      time.Time
+	user           string
+	action         string
+	objectType     string
+	objectName     string
+	taskID         string
+	deploymentName string
+	instance       string
+	context        map[string]interface{}
 }
 
 type EventResp struct {
-	Id         int    // 165
-	Timestamp  int64  // 1440318199
-	User       string // e.g. "admin"
-	Action     string
-	ObjectType string
-	ObjectName string
-	Task       string
-	Deployment string
-	Instance   string
-	Context    map[string]interface{}
+	ID             string                 `json:"id"`
+	Timestamp      int64                  `json:"timestamp"`
+	User           string                 `json:"user"`
+	Action         string                 `json:"action"`
+	ObjectType     string                 `json:"object_type"`
+	ObjectName     string                 `json:"object_name"`
+	TaskID         string                 `json:"task"`
+	DeploymentName string                 `json:"deployment"`
+	Instance       string                 `json:"instance"`
+	ParentID       string                 `json:"parent_id,omitempty"`
+	Context        map[string]interface{} `json:"context"`
 }
 
-func (e EventImpl) Id() int                         { return e.id }
+func (e EventImpl) ID() string                      { return e.id }
+func (e EventImpl) ParentID() string                { return e.parentID }
 func (e EventImpl) Timestamp() time.Time            { return e.timestamp }
 func (e EventImpl) User() string                    { return e.user }
 func (e EventImpl) Action() string                  { return e.action }
 func (e EventImpl) ObjectType() string              { return e.objectType }
 func (e EventImpl) ObjectName() string              { return e.objectName }
-func (e EventImpl) Task() string                    { return e.task }
-func (e EventImpl) Deployment() string              { return e.deployment }
+func (e EventImpl) TaskID() string                  { return e.taskID }
+func (e EventImpl) DeploymentName() string          { return e.deploymentName }
 func (e EventImpl) Instance() string                { return e.instance }
 func (e EventImpl) Context() map[string]interface{} { return e.context }
 
@@ -50,20 +52,21 @@ func NewEventFromResp(client Client, r EventResp) EventImpl {
 	return EventImpl{
 		client: client,
 
-		id:         r.Id,
-		timestamp:  time.Unix(r.Timestamp, 0).UTC(),
-		user:       r.User,
-		action:     r.Action,
-		objectType: r.ObjectType,
-		objectName: r.ObjectName,
-		task:       r.Task,
-		deployment: r.Deployment,
-		instance:   r.Instance,
-		context:    r.Context,
+		id:             r.ID,
+		parentID:       r.ParentID,
+		timestamp:      time.Unix(r.Timestamp, 0).UTC(),
+		user:           r.User,
+		action:         r.Action,
+		objectType:     r.ObjectType,
+		objectName:     r.ObjectName,
+		taskID:         r.TaskID,
+		deploymentName: r.DeploymentName,
+		instance:       r.Instance,
+		context:        r.Context,
 	}
 }
 
-func (d DirectorImpl) Events(opts map[string]interface{}) ([]Event, error) {
+func (d DirectorImpl) Events(opts EventsFilter) ([]Event, error) {
 	events := []Event{}
 
 	eventResps, err := d.client.Events(opts)
@@ -78,31 +81,32 @@ func (d DirectorImpl) Events(opts map[string]interface{}) ([]Event, error) {
 	return events, nil
 }
 
-func (c Client) Events(opts map[string]interface{}) ([]EventResp, error) {
+func (c Client) Events(opts EventsFilter) ([]EventResp, error) {
 	var events []EventResp
 
-	path := fmt.Sprintf("/events")
-
-	if len(opts) > 0 {
-		path += "?"
+	u, _ := url.Parse("/events")
+	q := u.Query()
+	if opts.BeforeID != nil {
+		q.Set("before_id", *opts.BeforeID)
 	}
-
-	for key, value := range opts {
-		path += key + "="
-		switch v := value.(type) {
-		case string:
-			path += v
-		case time.Time:
-			path += fmt.Sprintf("%d", v.Unix())
-		case int:
-			path += fmt.Sprintf("%d", v)
-		}
-
-		path += "&"
-
+	if opts.Before != nil {
+		q.Set("before_time", *opts.Before)
 	}
+	if opts.After != nil {
+		q.Set("after_time", *opts.After)
+	}
+	if opts.DeploymentName != nil {
+		q.Set("deployment", *opts.DeploymentName)
+	}
+	if opts.TaskID != nil {
+		q.Set("task", *opts.TaskID)
+	}
+	if opts.Instance != nil {
+		q.Set("instance", *opts.Instance)
+	}
+	u.RawQuery = q.Encode()
 
-	path = strings.TrimSuffix(path, "+")
+	path := u.String()
 
 	err := c.clientRequest.Get(path, &events)
 	if err != nil {
