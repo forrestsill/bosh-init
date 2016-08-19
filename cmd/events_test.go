@@ -109,8 +109,8 @@ var _ = Describe("EventsCmd", func() {
 
 		It("filters events based on options", func() {
 			beforeID := "0"
-			before := time.Date(2050, time.November, 10, 23, 0, 0, 0, time.UTC)
-			after := time.Date(3055, time.November, 10, 23, 0, 0, 0, time.UTC)
+			before := time.Date(2050, time.November, 10, 23, 0, 0, 0, time.UTC).String()
+			after := time.Date(3055, time.November, 10, 23, 0, 0, 0, time.UTC).String()
 			deploymentName := "deploymentName"
 			taskID := "task"
 			instance := "instance2"

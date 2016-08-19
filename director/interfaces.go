@@ -201,8 +201,8 @@ type OrphanedDisk interface {
 
 type EventsFilter struct {
 	BeforeID       *string
-	Before         *time.Time
-	After          *time.Time
+	Before         *string
+	After          *string
 	DeploymentName *string
 	TaskID         *string
 	Instance       *string
