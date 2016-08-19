@@ -9,6 +9,7 @@ import (
 	"github.com/onsi/gomega/ghttp"
 
 	. "github.com/cloudfoundry/bosh-init/director"
+	"strconv"
 )
 
 var _ = Describe("Director", func() {
@@ -50,9 +51,9 @@ var _ = Describe("Director", func() {
 		"user": "admin2",
 		"action": "delete",
 		"object_type": "vm",
-		"objectName": "33f",
-		"taskID": "302",
-		"deploymentName": "test-bosh-2",
+		"object_name": "33f",
+		"task": "302",
+		"deployment": "test-bosh-2",
 		"instance": "compilation-6",
 		"context": {}
 	}
@@ -74,7 +75,7 @@ var _ = Describe("Director", func() {
 			opts := EventsFilter{BeforeID: &beforeID}
 			server.AppendHandlers(
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/events", "before-id=1"),
+					ghttp.VerifyRequest("GET", "/events", "before_id=1"),
 					ghttp.VerifyBasicAuth("username", "password"),
 					ghttp.RespondWith(http.StatusOK, `[
 					{
@@ -83,9 +84,9 @@ var _ = Describe("Director", func() {
 		"user": "admin",
 		"action": "cleanup ssh",
 		"object_type": "instance",
-		"objectName": "33d",
-		"taskID": "303",
-		"deploymentName": "test-bosh",
+		"object_name": "33d",
+		"task": "303",
+		"deployment": "test-bosh",
 		"instance": "reporter/e",
 		"context": {"user":"bosh_z$"}
 	}
@@ -103,11 +104,11 @@ var _ = Describe("Director", func() {
 		})
 
 		It("filters events based on 'before' option", func() {
-			before := time.Date(2015, time.August, 23, 8, 23, 19, 0, time.UTC)
+			before := strconv.FormatInt(time.Date(2015, time.August, 23, 8, 23, 19, 0, time.UTC).Unix(), 10)
 			opts := EventsFilter{Before: &before}
 			server.AppendHandlers(
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/events", "before=1440318199"),
+					ghttp.VerifyRequest("GET", "/events", "before_time=1440318199"),
 					ghttp.VerifyBasicAuth("username", "password"),
 					ghttp.RespondWith(http.StatusOK, `[
 					{
@@ -116,9 +117,9 @@ var _ = Describe("Director", func() {
 		"user": "admin",
 		"action": "cleanup ssh",
 		"object_type": "instance",
-		"objectName": "33d",
-		"taskID": "303",
-		"deploymentName": "test-bosh",
+		"object_name": "33d",
+		"task": "303",
+		"deployment": "test-bosh",
 		"instance": "reporter/e",
 		"context": {"user":"bosh_z$"}
 	}
@@ -136,11 +137,11 @@ var _ = Describe("Director", func() {
 		})
 
 		It("filters events based on 'after' option", func() {
-			after := time.Date(2015, time.August, 23, 8, 23, 20, 0, time.UTC)
+			after := strconv.FormatInt(time.Date(2015, time.August, 23, 8, 23, 20, 0, time.UTC).Unix(), 10)
 			opts := EventsFilter{After: &after}
 			server.AppendHandlers(
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/events", "after=1440318200"),
+					ghttp.VerifyRequest("GET", "/events", "after_time=1440318200"),
 					ghttp.VerifyBasicAuth("username", "password"),
 					ghttp.RespondWith(http.StatusOK, `[
 
@@ -150,9 +151,9 @@ var _ = Describe("Director", func() {
 		"user": "admin2",
 		"action": "delete",
 		"object_type": "vm",
-		"objectName": "33f",
-		"taskID": "302",
-		"deploymentName": "test-bosh-2",
+		"object_name": "33f",
+		"task": "302",
+		"deployment": "test-bosh-2",
 		"instance": "compilation-6",
 		"context": {}
 	}
@@ -174,7 +175,7 @@ var _ = Describe("Director", func() {
 			opts := EventsFilter{DeploymentName: &deploymentName}
 			server.AppendHandlers(
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/events", "deploymentName=test-bosh-2"),
+					ghttp.VerifyRequest("GET", "/events", "deployment=test-bosh-2"),
 					ghttp.VerifyBasicAuth("username", "password"),
 					ghttp.RespondWith(http.StatusOK, `[
 	{
@@ -183,9 +184,9 @@ var _ = Describe("Director", func() {
 		"user": "admin2",
 		"action": "delete",
 		"object_type": "vm",
-		"objectName": "33f",
-		"taskID": "302",
-		"deploymentName": "test-bosh-2",
+		"object_name": "33f",
+		"task": "302",
+		"deployment": "test-bosh-2",
 		"instance": "compilation-6",
 		"context": {}
 	}
@@ -207,7 +208,7 @@ var _ = Describe("Director", func() {
 			opts := EventsFilter{TaskID: &taskID}
 			server.AppendHandlers(
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/events", "taskID=303"),
+					ghttp.VerifyRequest("GET", "/events", "task=303"),
 					ghttp.VerifyBasicAuth("username", "password"),
 					ghttp.RespondWith(http.StatusOK, `[
 					{
@@ -216,9 +217,9 @@ var _ = Describe("Director", func() {
 		"user": "admin",
 		"action": "cleanup ssh",
 		"object_type": "instance",
-		"objectName": "33d",
-		"taskID": "303",
-		"deploymentName": "test-bosh",
+		"object_name": "33d",
+		"task": "303",
+		"deployment": "test-bosh",
 		"instance": "reporter/e",
 		"context": {"user":"bosh_z$"}
 	}
@@ -250,8 +251,8 @@ var _ = Describe("Director", func() {
 		"action": "delete",
 		"object_type": "vm",
 		"object_name": "33f",
-		"taskID": "302",
-		"deploymentName": "test-bosh-2",
+		"task": "302",
+		"deployment": "test-bosh-2",
 		"instance": "compilation-6",
 		"context": {}
 	}
@@ -271,13 +272,13 @@ var _ = Describe("Director", func() {
 		It("returns a single event based on multiple options", func() {
 			instance := "compilation-6"
 			deploymentName := "test-bosh-2"
-			opts := EventsFilter {
-				Instance: &instance,
+			opts := EventsFilter{
+				Instance:       &instance,
 				DeploymentName: &deploymentName,
 			}
 			server.AppendHandlers(
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/events", "instance=compilation-6&deploymentName=test-bosh-2"),
+					ghttp.VerifyRequest("GET", "/events", "instance=compilation-6&deployment=test-bosh-2"),
 					ghttp.VerifyBasicAuth("username", "password"),
 					ghttp.RespondWith(http.StatusOK, `[
 	{
@@ -287,8 +288,8 @@ var _ = Describe("Director", func() {
 		"action": "delete",
 		"object_type": "vm",
 		"object_name": "33f",
-		"taskID": "302",
-		"deploymentName": "test-bosh-2",
+		"task": "302",
+		"deployment": "test-bosh-2",
 		"instance": "compilation-6",
 		"context": {}
 	}
@@ -309,8 +310,8 @@ var _ = Describe("Director", func() {
 			instance := "compilation-6"
 			deploymentName := "test-bosh"
 			opts := EventsFilter{
-				DeploymentName: &instance,
-				Instance: &deploymentName,
+				DeploymentName: &deploymentName,
+				Instance:       &instance,
 			}
 			server.AppendHandlers(
 				ghttp.CombineHandlers(

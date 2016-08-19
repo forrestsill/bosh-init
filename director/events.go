@@ -2,10 +2,9 @@ package director
 
 import (
 	"fmt"
-	"time"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	"net/url"
-	"strconv"
+	"time"
 )
 
 type EventImpl struct {
@@ -24,19 +23,19 @@ type EventImpl struct {
 }
 
 type EventResp struct {
-	ID             string
-	Timestamp      int64
-	User           string
-	Action         string
-	ObjectType     string
-	ObjectName     string
-	TaskID         string
-	DeploymentName string
-	Instance       string
+	ID             string `json:"id"`
+	Timestamp      int64  `json:"timestamp"`
+	User           string `json:"user"`
+	Action         string `json:"action"`
+	ObjectType     string `json:"object_type"`
+	ObjectName     string `json:"object_name"`
+	TaskID         string `json:"task"`
+	DeploymentName string `json:"deployment"`
+	Instance       string `json:"instance"`
 	Context        map[string]interface{}
 }
 
-func (e EventImpl) ID() string                         { return e.id }
+func (e EventImpl) ID() string                      { return e.id }
 func (e EventImpl) Timestamp() time.Time            { return e.timestamp }
 func (e EventImpl) User() string                    { return e.user }
 func (e EventImpl) Action() string                  { return e.action }
@@ -84,28 +83,22 @@ func (c Client) Events(opts EventsFilter) ([]EventResp, error) {
 
 	u, _ := url.Parse("/events")
 	q := u.Query()
-	if (opts.BeforeID != nil) {
-		fmt.Printf("BEFORE-ID: %v", *opts.BeforeID)
-		q.Set("before-id", *opts.BeforeID)
+	if opts.BeforeID != nil {
+		q.Set("before_id", *opts.BeforeID)
 	}
-	if (!opts.Before.IsZero()) {
-		fmt.Printf("BEFORE: %v", *opts.Before)
-		q.Set("before", strconv.FormatInt((*opts.Before).Unix(), 10))
+	if opts.Before != nil {
+		q.Set("before_time", *opts.Before)
 	}
-	if (!opts.After.IsZero()) {
-		fmt.Printf("AFTER: %v", *opts.After)
-		q.Set("after", strconv.FormatInt((*opts.After).Unix(), 10))
+	if opts.After != nil {
+		q.Set("after_time", *opts.After)
 	}
-	if (opts.DeploymentName != nil) {
-		fmt.Printf("DEPLOYMENT-NAME: %v", *opts.DeploymentName)
-		q.Set("deploymentName", *opts.DeploymentName)
+	if opts.DeploymentName != nil {
+		q.Set("deployment", *opts.DeploymentName)
 	}
-	if (opts.TaskID != nil) {
-		fmt.Printf("TASK-ID: %v", *opts.TaskID)
-		q.Set("taskID", *opts.TaskID)
+	if opts.TaskID != nil {
+		q.Set("task", *opts.TaskID)
 	}
-	if (opts.Instance != nil) {
-		fmt.Printf("INSTANCE: %v", *opts.Instance)
+	if opts.Instance != nil {
 		q.Set("instance", *opts.Instance)
 	}
 	u.RawQuery = q.Encode()
