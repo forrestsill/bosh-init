@@ -85,21 +85,27 @@ func (c Client) Events(opts EventsFilter) ([]EventResp, error) {
 	u, _ := url.Parse("/events")
 	q := u.Query()
 	if (opts.BeforeID != nil) {
+		fmt.Printf("BEFORE-ID: %v", *opts.BeforeID)
 		q.Set("before-id", *opts.BeforeID)
 	}
-	if (opts.Before != nil) {
+	if (!opts.Before.IsZero()) {
+		fmt.Printf("BEFORE: %v", *opts.Before)
 		q.Set("before", strconv.FormatInt((*opts.Before).Unix(), 10))
 	}
-	if (opts.After != nil) {
+	if (!opts.After.IsZero()) {
+		fmt.Printf("AFTER: %v", *opts.After)
 		q.Set("after", strconv.FormatInt((*opts.After).Unix(), 10))
 	}
 	if (opts.DeploymentName != nil) {
+		fmt.Printf("DEPLOYMENT-NAME: %v", *opts.DeploymentName)
 		q.Set("deploymentName", *opts.DeploymentName)
 	}
 	if (opts.TaskID != nil) {
+		fmt.Printf("TASK-ID: %v", *opts.TaskID)
 		q.Set("taskID", *opts.TaskID)
 	}
 	if (opts.Instance != nil) {
+		fmt.Printf("INSTANCE: %v", *opts.Instance)
 		q.Set("instance", *opts.Instance)
 	}
 	u.RawQuery = q.Encode()

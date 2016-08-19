@@ -33,23 +33,23 @@ var _ = Describe("Director", func() {
 					ghttp.VerifyBasicAuth("username", "password"),
 					ghttp.RespondWith(http.StatusOK, `[
 	{
-		"ID": "1",
+		"id": "1",
 		"timestamp": 1440318199,
 		"user": "admin",
 		"action": "cleanup ssh",
-		"objectType": "instance",
-		"objectName": "33d",
-		"taskID": "303",
-		"deploymentName": "test-bosh",
+		"object_type": "instance",
+		"object_name": "33d",
+		"task": "303",
+		"deployment": "test-bosh",
 		"instance": "reporter/e",
 		"context": {"user":"bosh_z$"}
 	},
 	{
-		"ID": "2",
+		"id": "2",
 		"timestamp": 1440318200,
 		"user": "admin2",
 		"action": "delete",
-		"objectType": "vm",
+		"object_type": "vm",
 		"objectName": "33f",
 		"taskID": "302",
 		"deploymentName": "test-bosh-2",
@@ -78,11 +78,11 @@ var _ = Describe("Director", func() {
 					ghttp.VerifyBasicAuth("username", "password"),
 					ghttp.RespondWith(http.StatusOK, `[
 					{
-		"ID": "1",
+		"id": "1",
 		"timestamp": 1440318199,
 		"user": "admin",
 		"action": "cleanup ssh",
-		"objectType": "instance",
+		"object_type": "instance",
 		"objectName": "33d",
 		"taskID": "303",
 		"deploymentName": "test-bosh",
@@ -111,11 +111,11 @@ var _ = Describe("Director", func() {
 					ghttp.VerifyBasicAuth("username", "password"),
 					ghttp.RespondWith(http.StatusOK, `[
 					{
-		"ID": "1",
+		"id": "1",
 		"timestamp": 1440318199,
 		"user": "admin",
 		"action": "cleanup ssh",
-		"objectType": "instance",
+		"object_type": "instance",
 		"objectName": "33d",
 		"taskID": "303",
 		"deploymentName": "test-bosh",
@@ -145,11 +145,11 @@ var _ = Describe("Director", func() {
 					ghttp.RespondWith(http.StatusOK, `[
 
 	{
-		"ID": "2",
+		"id": "2",
 		"timestamp": 1440318200,
 		"user": "admin2",
 		"action": "delete",
-		"objectType": "vm",
+		"object_type": "vm",
 		"objectName": "33f",
 		"taskID": "302",
 		"deploymentName": "test-bosh-2",
@@ -178,11 +178,11 @@ var _ = Describe("Director", func() {
 					ghttp.VerifyBasicAuth("username", "password"),
 					ghttp.RespondWith(http.StatusOK, `[
 	{
-		"ID": "2",
+		"id": "2",
 		"timestamp": 1440318200,
 		"user": "admin2",
 		"action": "delete",
-		"objectType": "vm",
+		"object_type": "vm",
 		"objectName": "33f",
 		"taskID": "302",
 		"deploymentName": "test-bosh-2",
@@ -211,11 +211,11 @@ var _ = Describe("Director", func() {
 					ghttp.VerifyBasicAuth("username", "password"),
 					ghttp.RespondWith(http.StatusOK, `[
 					{
-		"ID": "1",
+		"id": "1",
 		"timestamp": 1440318199,
 		"user": "admin",
 		"action": "cleanup ssh",
-		"objectType": "instance",
+		"object_type": "instance",
 		"objectName": "33d",
 		"taskID": "303",
 		"deploymentName": "test-bosh",
@@ -244,12 +244,12 @@ var _ = Describe("Director", func() {
 					ghttp.VerifyBasicAuth("username", "password"),
 					ghttp.RespondWith(http.StatusOK, `[
 	{
-		"ID": "2",
+		"id": "2",
 		"timestamp": 1440318200,
 		"user": "admin2",
 		"action": "delete",
-		"objectType": "vm",
-		"objectName": "33f",
+		"object_type": "vm",
+		"object_name": "33f",
 		"taskID": "302",
 		"deploymentName": "test-bosh-2",
 		"instance": "compilation-6",
@@ -281,12 +281,12 @@ var _ = Describe("Director", func() {
 					ghttp.VerifyBasicAuth("username", "password"),
 					ghttp.RespondWith(http.StatusOK, `[
 	{
-		"ID": "2",
+		"id": "2",
 		"timestamp": 1440318200,
 		"user": "admin2",
 		"action": "delete",
-		"objectType": "vm",
-		"objectName": "33f",
+		"object_type": "vm",
+		"object_name": "33f",
 		"taskID": "302",
 		"deploymentName": "test-bosh-2",
 		"instance": "compilation-6",
