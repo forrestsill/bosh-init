@@ -36,7 +36,11 @@ var _ = Describe("EventsCmd", func() {
 
 		events := []boshdir.Event{
 			&fakedir.FakeEvent{
-				IDStub:        func() string { return "4" },
+				IDStub: func() string { return "4" },
+				ParentIDStub: func() *string {
+					val := "1"
+					return &val
+				},
 				TimestampStub: func() time.Time { return time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC) },
 
 				UserStub: func() string { return "user" },
@@ -80,7 +84,7 @@ var _ = Describe("EventsCmd", func() {
 
 				Rows: [][]boshtbl.Value{
 					{
-						boshtbl.NewValueString("4"),
+						boshtbl.NewValueString("4 <- 1"),
 						boshtbl.NewValueTime(time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC)),
 						boshtbl.NewValueString("user"),
 						boshtbl.NewValueString("action"),

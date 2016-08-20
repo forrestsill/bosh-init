@@ -36,8 +36,14 @@ func (c EventsCmd) Run(opts EventsOpts) error {
 	}
 
 	for _, e := range events {
+		id := e.ID()
+
+		if e.ParentID() != nil {
+			id += " <- " + *e.ParentID()
+		}
+
 		table.Rows = append(table.Rows, []boshtbl.Value{
-			boshtbl.NewValueString(e.ID()),
+			boshtbl.NewValueString(id),
 			boshtbl.NewValueTime(e.Timestamp()),
 			boshtbl.NewValueString(e.User()),
 			boshtbl.NewValueString(e.Action()),

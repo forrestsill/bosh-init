@@ -15,6 +15,12 @@ type FakeEvent struct {
 	iDReturns     struct {
 		result1 string
 	}
+	ParentIDStub        func() *string
+	parentIDMutex       sync.RWMutex
+	parentIDArgsForCall []struct{}
+	parentIDReturns     struct {
+		result1 *string
+	}
 	TimestampStub        func() time.Time
 	timestampMutex       sync.RWMutex
 	timestampArgsForCall []struct{}
@@ -69,11 +75,14 @@ type FakeEvent struct {
 	contextReturns     struct {
 		result1 map[string]interface{}
 	}
+	invocations      map[string][][]interface{}
+	invocationsMutex sync.RWMutex
 }
 
 func (fake *FakeEvent) ID() string {
 	fake.iDMutex.Lock()
 	fake.iDArgsForCall = append(fake.iDArgsForCall, struct{}{})
+	fake.recordInvocation("ID", []interface{}{})
 	fake.iDMutex.Unlock()
 	if fake.IDStub != nil {
 		return fake.IDStub()
@@ -95,9 +104,35 @@ func (fake *FakeEvent) IDReturns(result1 string) {
 	}{result1}
 }
 
+func (fake *FakeEvent) ParentID() *string {
+	fake.parentIDMutex.Lock()
+	fake.parentIDArgsForCall = append(fake.parentIDArgsForCall, struct{}{})
+	fake.recordInvocation("ParentID", []interface{}{})
+	fake.parentIDMutex.Unlock()
+	if fake.ParentIDStub != nil {
+		return fake.ParentIDStub()
+	} else {
+		return fake.parentIDReturns.result1
+	}
+}
+
+func (fake *FakeEvent) ParentIDCallCount() int {
+	fake.parentIDMutex.RLock()
+	defer fake.parentIDMutex.RUnlock()
+	return len(fake.parentIDArgsForCall)
+}
+
+func (fake *FakeEvent) ParentIDReturns(result1 *string) {
+	fake.ParentIDStub = nil
+	fake.parentIDReturns = struct {
+		result1 *string
+	}{result1}
+}
+
 func (fake *FakeEvent) Timestamp() time.Time {
 	fake.timestampMutex.Lock()
 	fake.timestampArgsForCall = append(fake.timestampArgsForCall, struct{}{})
+	fake.recordInvocation("Timestamp", []interface{}{})
 	fake.timestampMutex.Unlock()
 	if fake.TimestampStub != nil {
 		return fake.TimestampStub()
@@ -122,6 +157,7 @@ func (fake *FakeEvent) TimestampReturns(result1 time.Time) {
 func (fake *FakeEvent) User() string {
 	fake.userMutex.Lock()
 	fake.userArgsForCall = append(fake.userArgsForCall, struct{}{})
+	fake.recordInvocation("User", []interface{}{})
 	fake.userMutex.Unlock()
 	if fake.UserStub != nil {
 		return fake.UserStub()
@@ -146,6 +182,7 @@ func (fake *FakeEvent) UserReturns(result1 string) {
 func (fake *FakeEvent) Action() string {
 	fake.actionMutex.Lock()
 	fake.actionArgsForCall = append(fake.actionArgsForCall, struct{}{})
+	fake.recordInvocation("Action", []interface{}{})
 	fake.actionMutex.Unlock()
 	if fake.ActionStub != nil {
 		return fake.ActionStub()
@@ -170,6 +207,7 @@ func (fake *FakeEvent) ActionReturns(result1 string) {
 func (fake *FakeEvent) ObjectType() string {
 	fake.objectTypeMutex.Lock()
 	fake.objectTypeArgsForCall = append(fake.objectTypeArgsForCall, struct{}{})
+	fake.recordInvocation("ObjectType", []interface{}{})
 	fake.objectTypeMutex.Unlock()
 	if fake.ObjectTypeStub != nil {
 		return fake.ObjectTypeStub()
@@ -194,6 +232,7 @@ func (fake *FakeEvent) ObjectTypeReturns(result1 string) {
 func (fake *FakeEvent) ObjectName() string {
 	fake.objectNameMutex.Lock()
 	fake.objectNameArgsForCall = append(fake.objectNameArgsForCall, struct{}{})
+	fake.recordInvocation("ObjectName", []interface{}{})
 	fake.objectNameMutex.Unlock()
 	if fake.ObjectNameStub != nil {
 		return fake.ObjectNameStub()
@@ -218,6 +257,7 @@ func (fake *FakeEvent) ObjectNameReturns(result1 string) {
 func (fake *FakeEvent) TaskID() string {
 	fake.taskIDMutex.Lock()
 	fake.taskIDArgsForCall = append(fake.taskIDArgsForCall, struct{}{})
+	fake.recordInvocation("TaskID", []interface{}{})
 	fake.taskIDMutex.Unlock()
 	if fake.TaskIDStub != nil {
 		return fake.TaskIDStub()
@@ -242,6 +282,7 @@ func (fake *FakeEvent) TaskIDReturns(result1 string) {
 func (fake *FakeEvent) DeploymentName() string {
 	fake.deploymentNameMutex.Lock()
 	fake.deploymentNameArgsForCall = append(fake.deploymentNameArgsForCall, struct{}{})
+	fake.recordInvocation("DeploymentName", []interface{}{})
 	fake.deploymentNameMutex.Unlock()
 	if fake.DeploymentNameStub != nil {
 		return fake.DeploymentNameStub()
@@ -266,6 +307,7 @@ func (fake *FakeEvent) DeploymentNameReturns(result1 string) {
 func (fake *FakeEvent) Instance() string {
 	fake.instanceMutex.Lock()
 	fake.instanceArgsForCall = append(fake.instanceArgsForCall, struct{}{})
+	fake.recordInvocation("Instance", []interface{}{})
 	fake.instanceMutex.Unlock()
 	if fake.InstanceStub != nil {
 		return fake.InstanceStub()
@@ -290,6 +332,7 @@ func (fake *FakeEvent) InstanceReturns(result1 string) {
 func (fake *FakeEvent) Context() map[string]interface{} {
 	fake.contextMutex.Lock()
 	fake.contextArgsForCall = append(fake.contextArgsForCall, struct{}{})
+	fake.recordInvocation("Context", []interface{}{})
 	fake.contextMutex.Unlock()
 	if fake.ContextStub != nil {
 		return fake.ContextStub()
@@ -309,6 +352,46 @@ func (fake *FakeEvent) ContextReturns(result1 map[string]interface{}) {
 	fake.contextReturns = struct {
 		result1 map[string]interface{}
 	}{result1}
+}
+
+func (fake *FakeEvent) Invocations() map[string][][]interface{} {
+	fake.invocationsMutex.RLock()
+	defer fake.invocationsMutex.RUnlock()
+	fake.iDMutex.RLock()
+	defer fake.iDMutex.RUnlock()
+	fake.parentIDMutex.RLock()
+	defer fake.parentIDMutex.RUnlock()
+	fake.timestampMutex.RLock()
+	defer fake.timestampMutex.RUnlock()
+	fake.userMutex.RLock()
+	defer fake.userMutex.RUnlock()
+	fake.actionMutex.RLock()
+	defer fake.actionMutex.RUnlock()
+	fake.objectTypeMutex.RLock()
+	defer fake.objectTypeMutex.RUnlock()
+	fake.objectNameMutex.RLock()
+	defer fake.objectNameMutex.RUnlock()
+	fake.taskIDMutex.RLock()
+	defer fake.taskIDMutex.RUnlock()
+	fake.deploymentNameMutex.RLock()
+	defer fake.deploymentNameMutex.RUnlock()
+	fake.instanceMutex.RLock()
+	defer fake.instanceMutex.RUnlock()
+	fake.contextMutex.RLock()
+	defer fake.contextMutex.RUnlock()
+	return fake.invocations
+}
+
+func (fake *FakeEvent) recordInvocation(key string, args []interface{}) {
+	fake.invocationsMutex.Lock()
+	defer fake.invocationsMutex.Unlock()
+	if fake.invocations == nil {
+		fake.invocations = map[string][][]interface{}{}
+	}
+	if fake.invocations[key] == nil {
+		fake.invocations[key] = [][]interface{}{}
+	}
+	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
 var _ director.Event = new(FakeEvent)

@@ -47,6 +47,7 @@ var _ = Describe("Director", func() {
 	},
 	{
 		"id": "2",
+		"parent_id": "1",
 		"timestamp": 1440318200,
 		"user": "admin2",
 		"action": "delete",
@@ -147,6 +148,7 @@ var _ = Describe("Director", func() {
 
 	{
 		"id": "2",
+		"parent_id": "1",
 		"timestamp": 1440318200,
 		"user": "admin2",
 		"action": "delete",
@@ -180,6 +182,7 @@ var _ = Describe("Director", func() {
 					ghttp.RespondWith(http.StatusOK, `[
 	{
 		"id": "2",
+		"parent_id": "1",
 		"timestamp": 1440318200,
 		"user": "admin2",
 		"action": "delete",
@@ -246,6 +249,7 @@ var _ = Describe("Director", func() {
 					ghttp.RespondWith(http.StatusOK, `[
 	{
 		"id": "2",
+		"parent_id": "1",
 		"timestamp": 1440318200,
 		"user": "admin2",
 		"action": "delete",
@@ -283,6 +287,7 @@ var _ = Describe("Director", func() {
 					ghttp.RespondWith(http.StatusOK, `[
 	{
 		"id": "2",
+		"parent_id": "1",
 		"timestamp": 1440318200,
 		"user": "admin2",
 		"action": "delete",
@@ -374,6 +379,7 @@ func expectEvent1(events []Event) {
 func expectEvent2(events []Event) {
 	i := len(events) - 1
 	Expect(events[i].ID()).To(Equal("2"))
+	Expect(*events[i].ParentID()).To(Equal("1"))
 	Expect(events[i].Timestamp()).To(Equal(time.Date(2015, time.August, 23, 8, 23, 20, 0, time.UTC)))
 	Expect(events[i].User()).To(Equal("admin2"))
 	Expect(events[i].Action()).To(Equal("delete"))

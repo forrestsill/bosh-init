@@ -212,6 +212,7 @@ type EventsFilter struct {
 
 type Event interface {
 	ID() string
+	ParentID() *string
 	Timestamp() time.Time
 	User() string
 	Action() string

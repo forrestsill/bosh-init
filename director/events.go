@@ -11,6 +11,7 @@ type EventImpl struct {
 	client Client
 
 	id             string
+	parentID       *string
 	timestamp      time.Time
 	user           string
 	action         string
@@ -23,19 +24,21 @@ type EventImpl struct {
 }
 
 type EventResp struct {
-	ID             string `json:"id"`
-	Timestamp      int64  `json:"timestamp"`
-	User           string `json:"user"`
-	Action         string `json:"action"`
-	ObjectType     string `json:"object_type"`
-	ObjectName     string `json:"object_name"`
-	TaskID         string `json:"task"`
-	DeploymentName string `json:"deployment"`
-	Instance       string `json:"instance"`
+	ID             string  `json:"id"`
+	ParentID       *string `json:"parent_id"`
+	Timestamp      int64   `json:"timestamp"`
+	User           string  `json:"user"`
+	Action         string  `json:"action"`
+	ObjectType     string  `json:"object_type"`
+	ObjectName     string  `json:"object_name"`
+	TaskID         string  `json:"task"`
+	DeploymentName string  `json:"deployment"`
+	Instance       string  `json:"instance"`
 	Context        map[string]interface{}
 }
 
 func (e EventImpl) ID() string                      { return e.id }
+func (e EventImpl) ParentID() *string               { return e.parentID }
 func (e EventImpl) Timestamp() time.Time            { return e.timestamp }
 func (e EventImpl) User() string                    { return e.user }
 func (e EventImpl) Action() string                  { return e.action }
@@ -51,6 +54,7 @@ func NewEventFromResp(client Client, r EventResp) EventImpl {
 		client: client,
 
 		id:             r.ID,
+		parentID:       r.ParentID,
 		timestamp:      time.Unix(r.Timestamp, 0).UTC(),
 		user:           r.User,
 		action:         r.Action,
