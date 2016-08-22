@@ -20,6 +20,38 @@ var _ = Describe("Director", func() {
 
 	BeforeEach(func() {
 		director, server = BuildServer()
+		server.AppendHandlers(
+			ghttp.CombineHandlers(
+				ghttp.RespondWith(http.StatusOK, `[
+					{
+					  "id": "1",
+					  "timestamp": 1440318199,
+					  "user": "fake-user-1",
+					  "action": "fake-action",
+					  "object_type": "fake-object-type",
+					  "object_name": "fake-object-name",
+					  "task": "fake-task",
+					  "deployment": "fake-deployment",
+					  "instance": "fake-instance",
+					  "context": {"fake-context-key":"fake-context-value"}
+					},
+					{
+					  "id": "2",
+					  "parent_id": "1",
+					  "timestamp": 1440318200,
+					  "user": "fake-user-2",
+					  "action": "fake-action-2",
+					  "object_type": "fake-object-type-2",
+					  "object_name": "fake-object-name-2",
+					  "task": "fake-task-2",
+					  "deployment": "fake-deployment-2",
+					  "instance": "fake-instance-2",
+					  "context": {}
+					}
+				]`,
+				),
+			),
+		)
 	})
 
 	AfterEach(func() {
@@ -31,75 +63,27 @@ var _ = Describe("Director", func() {
 			server.AppendHandlers(
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("GET", "/events"),
-					ghttp.VerifyBasicAuth("username", "password"),
-					ghttp.RespondWith(http.StatusOK, `[
-	{
-		"id": "1",
-		"timestamp": 1440318199,
-		"user": "admin",
-		"action": "cleanup ssh",
-		"object_type": "instance",
-		"object_name": "33d",
-		"task": "303",
-		"deployment": "test-bosh",
-		"instance": "reporter/e",
-		"context": {"user":"bosh_z$"}
-	},
-	{
-		"id": "2",
-		"parent_id": "1",
-		"timestamp": 1440318200,
-		"user": "admin2",
-		"action": "delete",
-		"object_type": "vm",
-		"object_name": "33f",
-		"task": "302",
-		"deployment": "test-bosh-2",
-		"instance": "compilation-6",
-		"context": {}
-	}
-]`),
 				),
 			)
 
-			events, err := director.Events(EventsFilter{})
+			_, err := director.Events(EventsFilter{})
 
 			Expect(err).ToNot(HaveOccurred())
-			Expect(events).To(HaveLen(2))
-
-			expectEvent1(events)
-			expectEvent2(events)
 		})
 
 		It("filters events based on 'before-id' option", func() {
-			beforeID := "1"
+			beforeID := "3"
 			opts := EventsFilter{BeforeID: &beforeID}
+
 			server.AppendHandlers(
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/events", "before_id=1"),
-					ghttp.VerifyBasicAuth("username", "password"),
-					ghttp.RespondWith(http.StatusOK, `[
-					{
-		"id": "1",
-		"timestamp": 1440318199,
-		"user": "admin",
-		"action": "cleanup ssh",
-		"object_type": "instance",
-		"object_name": "33d",
-		"task": "303",
-		"deployment": "test-bosh",
-		"instance": "reporter/e",
-		"context": {"user":"bosh_z$"}
-	}
-					]`),
+					ghttp.VerifyRequest("GET", "/events", "before_id=3"),
 				),
 			)
 
 			events, err := director.Events(opts)
 
-			Expect(events).To(HaveLen(1))
-
-			expectEvent1(events)
+			expectedEvents(events)
 
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -110,29 +94,12 @@ var _ = Describe("Director", func() {
 			server.AppendHandlers(
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("GET", "/events", "before_time=1440318199"),
-					ghttp.VerifyBasicAuth("username", "password"),
-					ghttp.RespondWith(http.StatusOK, `[
-					{
-		"id": "1",
-		"timestamp": 1440318199,
-		"user": "admin",
-		"action": "cleanup ssh",
-		"object_type": "instance",
-		"object_name": "33d",
-		"task": "303",
-		"deployment": "test-bosh",
-		"instance": "reporter/e",
-		"context": {"user":"bosh_z$"}
-	}
-					]`),
 				),
 			)
 
 			events, err := director.Events(opts)
 
-			Expect(events).To(HaveLen(1))
-
-			expectEvent1(events)
+			expectedEvents(events)
 
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -142,140 +109,68 @@ var _ = Describe("Director", func() {
 			opts := EventsFilter{After: &after}
 			server.AppendHandlers(
 				ghttp.CombineHandlers(
-					ghttp.VerifyRequest("GET", "/events", "after_time=1440318200"),
-					ghttp.VerifyBasicAuth("username", "password"),
-					ghttp.RespondWith(http.StatusOK, `[
-
-	{
-		"id": "2",
-		"parent_id": "1",
-		"timestamp": 1440318200,
-		"user": "admin2",
-		"action": "delete",
-		"object_type": "vm",
-		"object_name": "33f",
-		"task": "302",
-		"deployment": "test-bosh-2",
-		"instance": "compilation-6",
-		"context": {}
-	}
-					]`),
+					ghttp.VerifyRequest("GET", "/events", "after_time=1440318199"),
 				),
 			)
 
 			events, err := director.Events(opts)
 
-			Expect(events).To(HaveLen(1))
-
-			expectEvent2(events)
+			expectedEvents(events)
 
 			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("filters events based on 'deploymentName' option", func() {
-			deploymentName := "test-bosh-2"
+			deploymentName := "fake-deployment-2"
 			opts := EventsFilter{DeploymentName: &deploymentName}
 			server.AppendHandlers(
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("GET", "/events", "deployment=test-bosh-2"),
-					ghttp.VerifyBasicAuth("username", "password"),
-					ghttp.RespondWith(http.StatusOK, `[
-	{
-		"id": "2",
-		"parent_id": "1",
-		"timestamp": 1440318200,
-		"user": "admin2",
-		"action": "delete",
-		"object_type": "vm",
-		"object_name": "33f",
-		"task": "302",
-		"deployment": "test-bosh-2",
-		"instance": "compilation-6",
-		"context": {}
-	}
-					]`),
 				),
 			)
 
 			events, err := director.Events(opts)
 
-			Expect(events).To(HaveLen(1))
-
-			expectEvent2(events)
+			expectedEvents(events)
 
 			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("filters events based on 'taskID' option", func() {
-			taskID := "303"
+			taskID := "fake-task"
 			opts := EventsFilter{TaskID: &taskID}
 			server.AppendHandlers(
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("GET", "/events", "task=303"),
-					ghttp.VerifyBasicAuth("username", "password"),
-					ghttp.RespondWith(http.StatusOK, `[
-					{
-		"id": "1",
-		"timestamp": 1440318199,
-		"user": "admin",
-		"action": "cleanup ssh",
-		"object_type": "instance",
-		"object_name": "33d",
-		"task": "303",
-		"deployment": "test-bosh",
-		"instance": "reporter/e",
-		"context": {"user":"bosh_z$"}
-	}
-					]`),
 				),
 			)
 
 			events, err := director.Events(opts)
 
-			Expect(events).To(HaveLen(1))
-
-			expectEvent1(events)
+			expectedEvents(events)
 
 			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("filters events based on 'instance' option", func() {
-			instance := "compilation-6"
+			instance := "fake-instance-2"
 			opts := EventsFilter{Instance: &instance}
 			server.AppendHandlers(
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("GET", "/events", "instance=compilation-6"),
-					ghttp.VerifyBasicAuth("username", "password"),
-					ghttp.RespondWith(http.StatusOK, `[
-	{
-		"id": "2",
-		"parent_id": "1",
-		"timestamp": 1440318200,
-		"user": "admin2",
-		"action": "delete",
-		"object_type": "vm",
-		"object_name": "33f",
-		"task": "302",
-		"deployment": "test-bosh-2",
-		"instance": "compilation-6",
-		"context": {}
-	}
-					]`),
 				),
 			)
 
 			events, err := director.Events(opts)
 
-			Expect(events).To(HaveLen(1))
-
-			expectEvent2(events)
+			expectedEvents(events)
 
 			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("returns a single event based on multiple options", func() {
-			instance := "compilation-6"
-			deploymentName := "test-bosh-2"
+			instance := "fake-instance-2"
+			deploymentName := "fake-deployment-2"
 			opts := EventsFilter{
 				Instance:       &instance,
 				DeploymentName: &deploymentName,
@@ -283,45 +178,27 @@ var _ = Describe("Director", func() {
 			server.AppendHandlers(
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("GET", "/events", "instance=compilation-6&deployment=test-bosh-2"),
-					ghttp.VerifyBasicAuth("username", "password"),
-					ghttp.RespondWith(http.StatusOK, `[
-	{
-		"id": "2",
-		"parent_id": "1",
-		"timestamp": 1440318200,
-		"user": "admin2",
-		"action": "delete",
-		"object_type": "vm",
-		"object_name": "33f",
-		"task": "302",
-		"deployment": "test-bosh-2",
-		"instance": "compilation-6",
-		"context": {}
-	}
-					]`),
 				),
 			)
 
 			events, err := director.Events(opts)
 
-			Expect(events).To(HaveLen(1))
-
-			expectEvent2(events)
+			expectedEvents(events)
 
 			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("returns no events based on multiple options", func() {
-			instance := "compilation-6"
-			deploymentName := "test-bosh"
+			instance := "fake-instance-2"
+			deploymentName := "fake-deployment"
 			opts := EventsFilter{
 				DeploymentName: &deploymentName,
 				Instance:       &instance,
 			}
+			server.Reset()
 			server.AppendHandlers(
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("GET", "/events"),
-					ghttp.VerifyBasicAuth("username", "password"),
 					ghttp.RespondWith(http.StatusOK, "[]"),
 				),
 			)
@@ -334,6 +211,7 @@ var _ = Describe("Director", func() {
 		})
 
 		It("returns error if response is non-200", func() {
+			server.Reset()
 			AppendBadRequest(ghttp.VerifyRequest("GET", "/events"), server)
 
 			_, err := director.Events(EventsFilter{})
@@ -343,6 +221,7 @@ var _ = Describe("Director", func() {
 		})
 
 		It("returns error if response cannot be unmarshalled", func() {
+			server.Reset()
 			server.AppendHandlers(
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("GET", "/events"),
@@ -359,37 +238,30 @@ var _ = Describe("Director", func() {
 
 })
 
-func expectEvent1(events []Event) {
+func expectedEvents(events []Event) {
 	Expect(events[0].ID()).To(Equal("1"))
 	Expect(events[0].Timestamp()).To(Equal(time.Date(2015, time.August, 23, 8, 23, 19, 0, time.UTC)))
-	Expect(events[0].User()).To(Equal("admin"))
-	Expect(events[0].Action()).To(Equal("cleanup ssh"))
-	Expect(events[0].ObjectType()).To(Equal("instance"))
-	Expect(events[0].ObjectName()).To(Equal("33d"))
-	Expect(events[0].TaskID()).To(Equal("303"))
-	Expect(events[0].DeploymentName()).To(Equal("test-bosh"))
-	Expect(events[0].Instance()).To(Equal("reporter/e"))
+	Expect(events[0].User()).To(Equal("fake-user-1"))
+	Expect(events[0].Action()).To(Equal("fake-action"))
+	Expect(events[0].ObjectType()).To(Equal("fake-object-type"))
+	Expect(events[0].ObjectName()).To(Equal("fake-object-name"))
+	Expect(events[0].TaskID()).To(Equal("fake-task"))
+	Expect(events[0].DeploymentName()).To(Equal("fake-deployment"))
+	Expect(events[0].Instance()).To(Equal("fake-instance"))
+	Expect(events[0].Context()).To(Equal(map[string]interface{}{"fake-context-key": "fake-context-value"}))
 
-	context := make(map[string]interface{})
-	context["user"] = "bosh_z$"
-
-	Expect(events[0].Context()).To(Equal(context))
-}
-
-func expectEvent2(events []Event) {
 	i := len(events) - 1
-	Expect(events[i].ID()).To(Equal("2"))
-	Expect(*events[i].ParentID()).To(Equal("1"))
-	Expect(events[i].Timestamp()).To(Equal(time.Date(2015, time.August, 23, 8, 23, 20, 0, time.UTC)))
-	Expect(events[i].User()).To(Equal("admin2"))
-	Expect(events[i].Action()).To(Equal("delete"))
-	Expect(events[i].ObjectType()).To(Equal("vm"))
-	Expect(events[i].ObjectName()).To(Equal("33f"))
-	Expect(events[i].TaskID()).To(Equal("302"))
-	Expect(events[i].DeploymentName()).To(Equal("test-bosh-2"))
-	Expect(events[i].Instance()).To(Equal("compilation-6"))
-
-	blankContext := make(map[string]interface{})
-
-	Expect(events[i].Context()).To(Equal(blankContext))
+	if i >= 0 {
+		Expect(events[i].ID()).To(Equal("2"))
+		Expect(events[i].ParentID()).To(Equal("1"))
+		Expect(events[i].Timestamp()).To(Equal(time.Date(2015, time.August, 23, 8, 23, 20, 0, time.UTC)))
+		Expect(events[i].User()).To(Equal("fake-user-2"))
+		Expect(events[i].Action()).To(Equal("fake-action-2"))
+		Expect(events[i].ObjectType()).To(Equal("fake-object-type-2"))
+		Expect(events[i].ObjectName()).To(Equal("fake-object-name-2"))
+		Expect(events[i].TaskID()).To(Equal("fake-task-2"))
+		Expect(events[i].DeploymentName()).To(Equal("fake-deployment-2"))
+		Expect(events[i].Instance()).To(Equal("fake-instance-2"))
+		Expect(events[i].Context()).To(Equal(map[string]interface{}{}))
+	}
 }

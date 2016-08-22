@@ -1,7 +1,6 @@
 package director
 
 import (
-	"fmt"
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 	"net/url"
 	"time"
@@ -11,7 +10,7 @@ type EventImpl struct {
 	client Client
 
 	id             string
-	parentID       *string
+	parentID       string
 	timestamp      time.Time
 	user           string
 	action         string
@@ -24,21 +23,21 @@ type EventImpl struct {
 }
 
 type EventResp struct {
-	ID             string  `json:"id"`
-	ParentID       *string `json:"parent_id"`
-	Timestamp      int64   `json:"timestamp"`
-	User           string  `json:"user"`
-	Action         string  `json:"action"`
-	ObjectType     string  `json:"object_type"`
-	ObjectName     string  `json:"object_name"`
-	TaskID         string  `json:"task"`
-	DeploymentName string  `json:"deployment"`
-	Instance       string  `json:"instance"`
-	Context        map[string]interface{}
+	ID             string                 `json:"id"`
+	Timestamp      int64                  `json:"timestamp"`
+	User           string                 `json:"user"`
+	Action         string                 `json:"action"`
+	ObjectType     string                 `json:"object_type"`
+	ObjectName     string                 `json:"object_name"`
+	TaskID         string                 `json:"task"`
+	DeploymentName string                 `json:"deployment"`
+	Instance       string                 `json:"instance"`
+	ParentID       string                 `json:"parent_id,omitempty"`
+	Context        map[string]interface{} `json:"context"`
 }
 
 func (e EventImpl) ID() string                      { return e.id }
-func (e EventImpl) ParentID() *string               { return e.parentID }
+func (e EventImpl) ParentID() string                { return e.parentID }
 func (e EventImpl) Timestamp() time.Time            { return e.timestamp }
 func (e EventImpl) User() string                    { return e.user }
 func (e EventImpl) Action() string                  { return e.action }
@@ -107,7 +106,7 @@ func (c Client) Events(opts EventsFilter) ([]EventResp, error) {
 	}
 	u.RawQuery = q.Encode()
 
-	path := fmt.Sprintf("%v", u)
+	path := u.String()
 
 	err := c.clientRequest.Get(path, &events)
 	if err != nil {

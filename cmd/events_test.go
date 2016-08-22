@@ -19,28 +19,17 @@ var _ = Describe("EventsCmd", func() {
 		ui       *fakeui.FakeUI
 		director *fakedir.FakeDirector
 		command  EventsCmd
+		events   []boshdir.Event
 	)
 
 	BeforeEach(func() {
 		ui = &fakeui.FakeUI{}
 		director = &fakedir.FakeDirector{}
 		command = NewEventsCmd(ui, director)
-	})
-
-	Describe("Run", func() {
-		var (
-			opts EventsOpts
-		)
-
-		act := func() error { return command.Run(opts) }
-
-		events := []boshdir.Event{
+		events = []boshdir.Event{
 			&fakedir.FakeEvent{
-				IDStub: func() string { return "4" },
-				ParentIDStub: func() *string {
-					val := "1"
-					return &val
-				},
+				IDStub:        func() string { return "4" },
+				ParentIDStub:  func() string { return "1" },
 				TimestampStub: func() time.Time { return time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC) },
 
 				UserStub: func() string { return "user" },
@@ -68,11 +57,17 @@ var _ = Describe("EventsCmd", func() {
 				ContextStub:        func() map[string]interface{} { return make(map[string]interface{}) },
 			},
 		}
+	})
+
+	Describe("Run", func() {
+		var (
+			opts EventsOpts
+		)
 
 		It("lists events", func() {
 			director.EventsReturns(events, nil)
 
-			err := act()
+			err := command.Run(opts)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(director.EventsArgsForCall(0)).To(Equal(boshdir.EventsFilter{}))
@@ -127,7 +122,7 @@ var _ = Describe("EventsCmd", func() {
 
 			director.EventsReturns(nil, nil)
 
-			err := act()
+			err := command.Run(opts)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(director.EventsArgsForCall(0)).To(Equal(boshdir.EventsFilter{
@@ -143,7 +138,7 @@ var _ = Describe("EventsCmd", func() {
 		It("returns error if events cannot be retrieved", func() {
 			director.EventsReturns(nil, errors.New("fake-err"))
 
-			err := act()
+			err := command.Run(opts)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("fake-err"))
 		})

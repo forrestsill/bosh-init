@@ -15,11 +15,11 @@ type FakeEvent struct {
 	iDReturns     struct {
 		result1 string
 	}
-	ParentIDStub        func() *string
+	ParentIDStub        func() string
 	parentIDMutex       sync.RWMutex
 	parentIDArgsForCall []struct{}
 	parentIDReturns     struct {
-		result1 *string
+		result1 string
 	}
 	TimestampStub        func() time.Time
 	timestampMutex       sync.RWMutex
@@ -104,7 +104,7 @@ func (fake *FakeEvent) IDReturns(result1 string) {
 	}{result1}
 }
 
-func (fake *FakeEvent) ParentID() *string {
+func (fake *FakeEvent) ParentID() string {
 	fake.parentIDMutex.Lock()
 	fake.parentIDArgsForCall = append(fake.parentIDArgsForCall, struct{}{})
 	fake.recordInvocation("ParentID", []interface{}{})
@@ -122,10 +122,10 @@ func (fake *FakeEvent) ParentIDCallCount() int {
 	return len(fake.parentIDArgsForCall)
 }
 
-func (fake *FakeEvent) ParentIDReturns(result1 *string) {
+func (fake *FakeEvent) ParentIDReturns(result1 string) {
 	fake.ParentIDStub = nil
 	fake.parentIDReturns = struct {
-		result1 *string
+		result1 string
 	}{result1}
 }
 

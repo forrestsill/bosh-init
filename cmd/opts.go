@@ -358,12 +358,12 @@ func (o DeleteDeploymentOpts) Execute(_ []string) error    { return o.call() }
 
 // Events
 type EventsOpts struct {
-	BeforeID       *string       `long:"before-id" description:"Show all events with id less or equal to given id"`
+	BeforeID       *string `long:"before-id" description:"Show all events with id less or equal to given id"`
 	Before         *string `long:"before" description:"Show all events by the given timestamp (ex: 2016-05-08 17:26:32)"`
 	After          *string `long:"after" description:"Show all events after the given timestamp (ex: 2016-05-08 17:26:32)"`
-	DeploymentName *string    `long:"deployment" description:"Filter all events by the Deployment Name"`
-	TaskID         *string    `long:"task" description:"Filter all events by the task id"`
-	Instance       *string    `long:"instance" description:"Filter all events by the instance job_name/id"`
+	DeploymentName *string `long:"deployment" description:"Filter all events by the Deployment Name"`
+	TaskID         *string `long:"task" description:"Filter all events by the task id"`
+	Instance       *string `long:"instance" description:"Filter all events by the instance job_name/id"`
 
 	call func() error
 }

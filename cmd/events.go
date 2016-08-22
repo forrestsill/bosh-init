@@ -38,8 +38,8 @@ func (c EventsCmd) Run(opts EventsOpts) error {
 	for _, e := range events {
 		id := e.ID()
 
-		if e.ParentID() != nil {
-			id += " <- " + *e.ParentID()
+		if e.ParentID() != "" {
+			id += " <- " + e.ParentID()
 		}
 
 		table.Rows = append(table.Rows, []boshtbl.Value{
